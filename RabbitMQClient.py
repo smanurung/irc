@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+import pika
+
+#constants
+hostname='localhost'
+
+#global variables
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=hostname))
+channel=connection.channel()
+nick='027'
+chList = []
+
+#change to specified name
+def changeName(name=''):
+	global nick
+	if(name.__len__()==0):
+		nick='027-KLJ345K245'
+	else:
+		nick=name
+	return
+
+def callback(ch,method,properties,body):
+	print "[x] %r" % (body,)
+
+while 1:
+	cmd=raw_input('> ')
+	param=cmd.split(' ')
+	
+	print 'command',param[0]
+	if(param[0].strip()=='/EXIT'):
+		print "program closed"
+		break
+	elif(param[0].strip()=='/NICK'):
+		if(param.__len__()>1):
+#			change as param
+			changeName(param[1])
+			print "Successfully change nickname to",nick
+		else:
+#			generate random nickname
+			changeName()
+			print "Generated random nickname: ",nick
+	elif(param[0].strip()=='/JOIN'):
+		if(param.__len__()>1):
+			ch = param[1]
+
+#			insert channel name to list
+			chList.append(ch)
+
+#			declare exchange
+			x = ch + 'X'
+			channel.exchange_declare(exchange=x,type='fanout')
+
+#			bind to queue with random name
+			q = ch + 'Q'
+			result=channel.queue_declare(exclusive=True)
+			queue_name=result.method.queue
+			channel.queue_bind(exchange=x,queue=queue_name)
+			
+#			start listening mode
+			channel.basic_consume(callback,queue=queue_name,no_ack=True)
+			channel.start_consuming()
+			
+			print "Successfully join to channel",ch
+		else:
+			print "Error Format: /JOIN <channelname>"			
+	elif(param[0].strip()=='/LEAVE'):
+		if(param.__len__()>1):
+			print "leave channel",param[1]
+		else:
+			print "Error Format: /LEAVE <channel>"
+	elif(param[0][0].strip()=='@'):
+		if(param.__len__()>1):
+			print "sending to channel",param[0]
+		else:
+			print "Error Format: NO Text Found. @<channelname> <text>"
