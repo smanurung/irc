@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import pika
+import pika, thread, time
 
 #constants
 hostname='localhost'
@@ -24,6 +24,11 @@ def changeName(name=''):
 
 def callback(ch,method,properties,body):
 	print "[x] %r" % (body,)
+
+def startListening(dum1,dum2):
+	global channel
+	print 'Waiting for channel',ch,'...'
+	channel.start_consuming()
 
 while 1:
 	cmd=raw_input('> ')
@@ -57,13 +62,16 @@ while 1:
 #			bind to queue with random name
 			q = ch + 'Q'
 			channel.queue_bind(exchange=x,queue=queue_name)
-			print 'Waiting for channel',ch,'...'
 			
-#			start listening mode
+#			start listening mode on different thread
 			channel.basic_consume(callback,queue=queue_name,no_ack=True)
-#			channel.start_consuming()
-			
+			try:
+				thread.start_new_thread(startListening,('',''))
+			except Exception, errtxt:
+				print errtxt
+				print "Error: unable to start thread"
 			print "Successfully join to channel",ch
+			time.sleep(1)
 		else:
 			print "Error Format: /JOIN <channelname>"			
 	elif(param[0].strip()=='/LEAVE'):
