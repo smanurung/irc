@@ -67,7 +67,8 @@ while 1:
 			print "Error Format: /JOIN <channelname>"			
 	elif(param[0].strip()=='/LEAVE'):
 		if(param.__len__()>1):
-
+			ch = param[1]
+			if(chList.__contains())
 			print "left channel",param[1]
 		else:
 			print "Error Format: /LEAVE <channelname>"
