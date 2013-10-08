@@ -7,6 +7,9 @@ hostname='localhost'
 #global variables
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=hostname))
 channel=connection.channel()
+result=channel.queue_declare(exclusive=True)
+queue_name=result.method.queue
+
 nick='027'
 chList = []
 
@@ -44,7 +47,7 @@ while 1:
 			ch = param[1]
 
 #			insert channel name to list
-			if(!chList.__contains__(ch)):
+			if(not chList.__contains__(ch)):
 				chList.append(ch)
 
 #			declare exchange
@@ -53,22 +56,30 @@ while 1:
 
 #			bind to queue with random name
 			q = ch + 'Q'
-			result=channel.queue_declare(exclusive=True)
-			queue_name=result.method.queue
 			channel.queue_bind(exchange=x,queue=queue_name)
 			print 'Waiting for channel',ch,'...'
 			
 #			start listening mode
 			channel.basic_consume(callback,queue=queue_name,no_ack=True)
-			channel.start_consuming()
+#			channel.start_consuming()
 			
 			print "Successfully join to channel",ch
 		else:
 			print "Error Format: /JOIN <channelname>"			
 	elif(param[0].strip()=='/LEAVE'):
 		if(param.__len__()>1):
-
-			print "left channel",param[1]
+			ch = param[1]
+			if(chList.__contains__(ch)):
+#				delete from chList
+				idx = chList.index(ch)
+				del chList[idx]
+				
+#				unbind queue
+				x = ch + 'X'
+				channel.queue_unbind(exchange=x,queue=queue_name)
+				print "Successfully left channel",param[1]
+			else:
+				print "You never join that channel"
 		else:
 			print "Error Format: /LEAVE <channelname>"
 	elif(param[0][0].strip()=='@'):
