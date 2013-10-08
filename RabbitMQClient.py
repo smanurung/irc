@@ -23,7 +23,7 @@ def changeName(name=''):
 	return
 
 def callback(ch,method,properties,body):
-	print "[x] %r" % (body,)
+	print body
 
 def startListening(dum1,dum2):
 	global channel
@@ -34,7 +34,7 @@ while 1:
 	cmd=raw_input('> ')
 	param=cmd.split(' ')
 	
-	print 'command',param[0]
+#	print 'command',param[0]
 	if(param[0].strip()=='/EXIT'):
 		print "program closed"
 		break
@@ -92,6 +92,19 @@ while 1:
 			print "Error Format: /LEAVE <channelname>"
 	elif(param[0][0].strip()=='@'):
 		if(param.__len__()>1):
-			print "sending to channel",param[0]
+			ch = param[0][1:]
+			if(chList.__contains__(ch)):
+				x = ch + 'X'
+#				create exchange if not exist
+				channel.exchange_declare(exchange=x,type='fanout')
+				message='['+ch+'] ('+nick+') '+param[1]
+#				publish message
+				channel.basic_publish(exchange=x,routing_key='',body=message)
+				print "sent to channel",ch
+			else :
+				print "You can't send to channel you've not joined"
 		else:
 			print "Error Format: NO Text Found. @<channelname> <text>"
+	else:
+#		send to all channels joined
+		print " "
