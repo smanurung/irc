@@ -118,7 +118,7 @@ while 1:
 				channel.exchange_declare(exchange=x,type='fanout')
 				
 #				create message
-				message='['+mem+'] ('+nick+')'
+				message='['+ch+'] ('+nick+')'
 				del param[0]
 				for item in param:
 					message = message + ' ' + item

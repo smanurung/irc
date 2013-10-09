@@ -52,4 +52,5 @@ IRC Program Using RabbitMQ Server
 		`[027] (027-d9rBY) left channel`
 	4. program lain yang join channel `027a` akan mendapat output:
 		`[027a] (027-d9rBY) left channel`
-
+		
+		
