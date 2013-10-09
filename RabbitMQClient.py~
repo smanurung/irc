@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import pika, thread, time
+import string, random
 
 #constants
 hostname='localhost'
@@ -17,10 +18,13 @@ chList = []
 def changeName(name=''):
 	global nick
 	if(name.__len__()==0):
-		nick='027-KLJ345K245'
+		nick='027-'+generateRandom()
 	else:
 		nick=name
 	return
+
+def generateRandom(size=5,chars=string.ascii_uppercase+string.ascii_lowercase+string.digits):
+	return ''.join(random.choice(chars) for x in range(size))
 
 def callback(ch,method,properties,body):
 	print body
@@ -97,14 +101,39 @@ while 1:
 				x = ch + 'X'
 #				create exchange if not exist
 				channel.exchange_declare(exchange=x,type='fanout')
-				message='['+ch+'] ('+nick+') '+param[1]
+				
+#				create message
+				message='['+mem+'] ('+nick+')'
+				del param[0]
+				for item in param:
+					message = message + ' ' + item
+				
 #				publish message
 				channel.basic_publish(exchange=x,routing_key='',body=message)
 				print "sent to channel",ch
+				time.sleep(1)
 			else :
 				print "You can't send to channel you've not joined"
 		else:
 			print "Error Format: NO Text Found. @<channelname> <text>"
 	else:
-#		send to all channels joined
-		print " "
+#		not empty parameter
+		if(param.__len__()>0):
+#			send to all channels joined
+			if (chList.__len__()>0):
+				for mem in chList:
+					x = mem + 'X'
+#					create exchange if not exist
+					channel.exchange_declare(exchange=x,type='fanout')
+#					create message
+					message='['+mem+'] ('+nick+')'
+					for m in param:
+						message = message + ' ' + m
+#					publish message
+					channel.basic_publish(exchange=x,routing_key='',body=message)
+				time.sleep(1)
+				print "Successfully sent to all joined channel"
+			else:
+				print "You don't have any channel yet"
+		else:
+			print "no command found"
