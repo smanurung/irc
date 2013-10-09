@@ -2,18 +2,6 @@
 import pika, thread, time
 import string, random
 
-#constants
-hostname='localhost'
-
-#global variables
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=hostname))
-channel=connection.channel()
-result=channel.queue_declare(exclusive=True)
-queue_name=result.method.queue
-
-nick='027'
-chList = []
-
 #change to specified name
 def changeName(name=''):
 	global nick
@@ -34,12 +22,40 @@ def startListening(dum1,dum2):
 	print 'Waiting for channel',ch,'...'
 	channel.start_consuming()
 
+def broadcast(msg):
+	global chList
+	if(chList.__len__()>0):
+		global channel
+		
+		for mem in chList:
+			x = mem + 'X'
+#			create exchange if not exist
+			channel.exchange_declare(exchange=x,type='fanout')
+#			create message
+			message='['+mem+'] ('+nick+') '+msg
+#			publish message
+			channel.basic_publish(exchange=x,routing_key='',body=message)
+		time.sleep(1)
+
+#constants
+hostname='localhost'
+
+#global variables
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=hostname))
+channel=connection.channel()
+result=channel.queue_declare(exclusive=True)
+queue_name=result.method.queue
+
+nick='027-'+generateRandom()
+chList = []
+
 while 1:
 	cmd=raw_input('> ')
 	param=cmd.split(' ')
 	
 #	print 'command',param[0]
 	if(param[0].strip()=='/EXIT'):
+		broadcast('left channel')
 		print "program closed"
 		break
 	elif(param[0].strip()=='/NICK'):
@@ -59,12 +75,11 @@ while 1:
 			if(not chList.__contains__(ch)):
 				chList.append(ch)
 
-#			declare exchange
+#			declare exchange, create if not exist
 			x = ch + 'X'
 			channel.exchange_declare(exchange=x,type='fanout')
 
 #			bind to queue with random name
-			q = ch + 'Q'
 			channel.queue_bind(exchange=x,queue=queue_name)
 			
 #			start listening mode on different thread
@@ -121,17 +136,10 @@ while 1:
 		if(param.__len__()>0):
 #			send to all channels joined
 			if (chList.__len__()>0):
-				for mem in chList:
-					x = mem + 'X'
-#					create exchange if not exist
-					channel.exchange_declare(exchange=x,type='fanout')
-#					create message
-					message='['+mem+'] ('+nick+')'
-					for m in param:
-						message = message + ' ' + m
-#					publish message
-					channel.basic_publish(exchange=x,routing_key='',body=message)
-				time.sleep(1)
+				msg = ''
+				for m in param:
+					msg = msg + ' ' + m
+				broadcast(msg)
 				print "Successfully sent to all joined channel"
 			else:
 				print "You don't have any channel yet"
