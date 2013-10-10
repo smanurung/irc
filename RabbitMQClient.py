@@ -38,10 +38,17 @@ def broadcast(msg):
 		time.sleep(1)
 
 #constants
-hostname='localhost'
+#hostname='localhost'
+hostname='167.205.32.7'
+portnum = 5672
+uname = 'guest'
+psw = 'sister'
+vhostname = '/'
 
 #global variables
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=hostname))
+credentials = pika.PlainCredentials(uname,psw)
+#connection = pika.BlockingConnection(pika.ConnectionParameters(host=hostname))
+connection = pika.BlockingConnection(pika.ConnectionParameters(hostname,portnum,vhostname,credentials))
 channel=connection.channel()
 result=channel.queue_declare(exclusive=True)
 queue_name=result.method.queue
